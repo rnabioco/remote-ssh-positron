@@ -1,9 +1,8 @@
 #!/bin/bash
 
 #BSUB -J positron
-#BSUB -n 1
-#BSUB -W 8:00
-#BSUB -R "rusage[mem=20000]"
+#BSUB -n 4
+#BSUB -R "select[mem>20] rusage[mem=20]"
 #BSUB -o logs/positron-%J.out
 #BSUB -q normal
 
