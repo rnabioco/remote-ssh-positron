@@ -1,16 +1,20 @@
 # Alpine Positron
 
-Launch [Positron](https://github.com/posit-dev/positron) on Alpine, the University of Colorado Boulder's HPC cluster.
+Launch [Positron](https://github.com/posit-dev/positron) on Alpine (CU Boulder) or amc-bodhi (CU Anschutz) HPC clusters.
 
 ## Overview
 
-This SLURM batch script allocates a compute node on Alpine and provides SSH connection instructions for remote development with Positron. The script uses a ProxyJump SSH configuration to connect through Alpine's login node to your allocated compute node.
+These scripts allocate a compute node on your HPC cluster and provide SSH connection instructions for remote development with Positron. The scripts use a ProxyJump SSH configuration to connect through the login node to your allocated compute node.
+
+- **Alpine** (CU Boulder): Uses SLURM job scheduler (`alpine-positron.sh`)
+- **amc-bodhi** (CU Anschutz): Uses LSF job scheduler (`bodhi-positron.sh`)
 
 ## Prerequisites
 
-- Access to Alpine HPC cluster
+- Access to Alpine or amc-bodhi HPC cluster
 - Positron installed on your local machine
-- SSH key configured for Alpine access
+- SSH key configured for cluster access
+- **amc-bodhi only**: Connected to AMC VPN
 
 ## Setup (One-time)
 
@@ -61,7 +65,7 @@ ln -s /scratch/alpine/${USER}/.positron-server ~/.positron-server
 - You may need to recreate the symlink if it's removed: `ln -s /scratch/alpine/${USER}/.positron-server ~/.positron-server`
 - For more details on how Positron Remote-SSH works, see: https://positron.posit.co/remote-ssh.html#how-it-works-troubleshooting
 
-## Quick Start
+## Quick Start (Alpine)
 
 ### 1. Submit the job to Alpine
 
@@ -110,16 +114,79 @@ Always cancel your job to free resources:
    scancel <JOB_ID>
    ```
 
+## Quick Start (amc-bodhi)
+
+**Important:** You must be connected to the AMC VPN before proceeding.
+
+### 1. Submit the job to amc-bodhi
+
+```bash
+bsub < bodhi-positron.sh
+```
+
+### 2. Check job status
+
+```bash
+bjobs
+```
+
+Wait until your job is in the "RUN" state.
+
+### 3. View connection instructions
+
+```bash
+cat logs/positron-<JOB_ID>.out
+```
+
+Replace `<JOB_ID>` with your actual job ID from `bjobs`.
+
+### 4. Connect from Positron
+
+- Open Positron on your **local machine**
+   - Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
+   - Select "Remote-SSH: Open SSH Configuration File"
+- Paste in your SSH config (from the log file) and save:
+
+  ```
+  Host positron-bodhi-<JOB_ID>
+      HostName <compute-node>
+      User <your-username>
+      ProxyJump <your-username>@amc-bodhi.ucdenver.pvt
+      ForwardAgent yes
+  ```
+
+- Select "Remote-SSH: Connect to Host"
+- Choose `positron-bodhi-<JOB_ID>` from the list
+- Positron will install its server components on the remote node automatically
+
+### 5. When finished
+
+Always cancel your job to free resources:
+```bash
+bkill <JOB_ID>
+```
+
 ## Configuration
 
-The script allocates resources via SLURM directives in `alpine-positron.sh`:
+### Alpine (`alpine-positron.sh`)
+
+Resources are configured via SLURM directives:
 
 - `--time=08:00:00` - Maximum job duration (8 hours)
 - `--mem=20gb` - Memory allocation (20 GB)
 - `--partition=amilan` - Alpine partition for general compute
 - `--qos=normal` - Quality of service tier
 
-Adjust these parameters based on your computational requirements. See [Alpine documentation](https://curc.readthedocs.io/en/latest/compute/alpine.html) for available options.
+See [Alpine documentation](https://curc.readthedocs.io/en/latest/compute/alpine.html) for available options.
+
+### amc-bodhi (`bodhi-positron.sh`)
+
+Resources are configured via LSF directives:
+
+- `-W 8:00` - Maximum job duration (8 hours)
+- `-R "rusage[mem=20000]"` - Memory allocation (20 GB)
+- `-q normal` - Queue for general compute
+- `-n 1` - Number of tasks
 
 ## Troubleshooting
 
