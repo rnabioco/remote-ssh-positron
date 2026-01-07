@@ -1,4 +1,4 @@
-# Alpine Positron
+# Positron over Remote SSH
 
 Launch [Positron](https://github.com/posit-dev/positron) on Alpine (CU Boulder) or amc-bodhi (CU Anschutz) HPC clusters.
 
