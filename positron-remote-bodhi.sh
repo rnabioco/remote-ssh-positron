@@ -30,6 +30,7 @@ show_connection_info() {
     echo ""
     echo -e "${YELLOW}Job ID:${NC} ${job_id}"
     echo -e "${YELLOW}Status:${NC} ${status}"
+    echo -e "${YELLOW}Time limit:${NC} $(grep -oP '(?<=--time=)\S+' "$0")"
     if [ -n "${hostname}" ]; then
         echo -e "${YELLOW}Compute node:${NC} ${hostname}"
     fi
