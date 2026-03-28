@@ -23,6 +23,7 @@ show_connection_info() {
     local job_id=$1
     local hostname=$2
     local status=$3
+    local time_limit=$(squeue -j ${job_id} -h -o "%l" 2>/dev/null)
 
     echo -e "${CYAN}========================================${NC}"
     echo -e "${GREEN}Positron Remote SSH Connection Info${NC}"
@@ -30,7 +31,7 @@ show_connection_info() {
     echo ""
     echo -e "${YELLOW}Job ID:${NC} ${job_id}"
     echo -e "${YELLOW}Status:${NC} ${status}"
-    echo -e "${YELLOW}Time limit:${NC} $(grep -oP '(?<=--time=)\S+' "$0")"
+    echo -e "${YELLOW}Time limit:${NC} ${time_limit}"
     if [ -n "${hostname}" ]; then
         echo -e "${YELLOW}Compute node:${NC} ${hostname}"
     fi
