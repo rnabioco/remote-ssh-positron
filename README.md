@@ -7,7 +7,7 @@ Launch [Positron](https://github.com/posit-dev/positron) on Alpine (CU Boulder) 
 These scripts allocate a compute node on your HPC cluster and provide SSH connection instructions for remote development with Positron. The scripts use a ProxyJump SSH configuration to connect through the login node to your allocated compute node.
 
 - **Alpine** (CU Boulder): Uses SLURM job scheduler (`alpine-positron.sh`)
-- **amc-bodhi** (CU Anschutz): Uses LSF job scheduler (`bodhi-positron.sh`)
+- **amc-bodhi** (CU Anschutz): Uses SLURM job scheduler (`bodhi-positron.sh`)
 
 ## Prerequisites
 
@@ -121,16 +121,16 @@ Always cancel your job to free resources:
 ### 1. Submit the job to amc-bodhi
 
 ```bash
-bsub < bodhi-positron.sh
+bash bodhi-positron.sh
 ```
 
 ### 2. Check job status
 
 ```bash
-bjobs
+squeue -u $USER
 ```
 
-Wait until your job is in the "RUN" state.
+Wait until your job is in the "R" (running) state.
 
 ### 3. View connection instructions
 
@@ -138,7 +138,7 @@ Wait until your job is in the "RUN" state.
 cat logs/positron-<JOB_ID>.out
 ```
 
-Replace `<JOB_ID>` with your actual job ID from `bjobs`.
+Replace `<JOB_ID>` with your actual job ID from `squeue`.
 
 ### 4. Connect from Positron
 
@@ -163,7 +163,7 @@ Replace `<JOB_ID>` with your actual job ID from `bjobs`.
 
 Always cancel your job to free resources:
 ```bash
-bkill <JOB_ID>
+scancel <JOB_ID>
 ```
 
 ## Configuration
@@ -181,12 +181,12 @@ See [Alpine documentation](https://curc.readthedocs.io/en/latest/compute/alpine.
 
 ### amc-bodhi (`bodhi-positron.sh`)
 
-Resources are configured via LSF directives:
+Resources are configured via SLURM directives:
 
-- `-W 8:00` - Maximum job duration (8 hours)
-- `-R "rusage[mem=20000]"` - Memory allocation (20 GB)
-- `-q normal` - Queue for general compute
-- `-n 1` - Number of tasks
+- `--time=08:00:00` - Maximum job duration (8 hours)
+- `--mem=20gb` - Memory allocation (20 GB)
+- `--partition=normal` - Partition for general compute
+- `--qos=normal` - Quality of service tier
 
 ## Troubleshooting
 
