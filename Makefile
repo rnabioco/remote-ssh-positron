@@ -1,5 +1,5 @@
 PREFIX := $(HOME)/.local/bin
-SCRIPTS := alpine-positron.sh bodhi-positron.sh
+SCRIPTS := positron-remote-alpine.sh positron-remote-bodhi.sh
 
 .PHONY: install uninstall
 

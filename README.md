@@ -6,8 +6,8 @@ Launch [Positron](https://github.com/posit-dev/positron) on Alpine (CU Boulder) 
 
 These scripts allocate a compute node on your HPC cluster and provide SSH connection instructions for remote development with Positron. The scripts use a ProxyJump SSH configuration to connect through the login node to your allocated compute node.
 
-- **Alpine** (CU Boulder): Uses SLURM job scheduler (`alpine-positron.sh`)
-- **amc-bodhi** (CU Anschutz): Uses SLURM job scheduler (`bodhi-positron.sh`)
+- **Alpine** (CU Boulder): Uses SLURM job scheduler (`positron-remote-alpine.sh`)
+- **amc-bodhi** (CU Anschutz): Uses SLURM job scheduler (`positron-remote-bodhi.sh`)
 
 ## Prerequisites
 
@@ -70,7 +70,7 @@ ln -s /scratch/alpine/${USER}/.positron-server ~/.positron-server
 ### 1. Submit the job to Alpine
 
 ```bash
-sbatch alpine-positron.sh
+sbatch positron-remote-alpine.sh
 ```
 
 ### 2. Check job status
@@ -121,7 +121,7 @@ Always cancel your job to free resources:
 ### 1. Submit the job to amc-bodhi
 
 ```bash
-bash bodhi-positron.sh
+bash positron-remote-bodhi.sh
 ```
 
 ### 2. Check job status
@@ -168,7 +168,7 @@ scancel <JOB_ID>
 
 ## Configuration
 
-### Alpine (`alpine-positron.sh`)
+### Alpine (`positron-remote-alpine.sh`)
 
 Resources are configured via SLURM directives:
 
@@ -179,7 +179,7 @@ Resources are configured via SLURM directives:
 
 See [Alpine documentation](https://curc.readthedocs.io/en/latest/compute/alpine.html) for available options.
 
-### amc-bodhi (`bodhi-positron.sh`)
+### amc-bodhi (`positron-remote-bodhi.sh`)
 
 Resources are configured via SLURM directives:
 

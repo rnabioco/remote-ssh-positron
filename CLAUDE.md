@@ -10,18 +10,18 @@ This repository contains a SLURM batch script for launching Positron (an IDE) on
 
 The repository is intentionally minimal:
 
-- `alpine-positron.sh`: SLURM batch script that allocates a compute node and provides connection details
+- `positron-remote-alpine.sh`: SLURM batch script that allocates a compute node and provides connection details
 - The script uses a ProxyJump SSH configuration pattern to connect through the login node to the allocated compute node
 
 ## Usage
 
 Submit the job to Alpine (the script self-submits to SLURM):
 ```bash
-./alpine-positron.sh
+./positron-remote-alpine.sh
 ```
 or
 ```bash
-bash alpine-positron.sh
+bash positron-remote-alpine.sh
 ```
 
 The script will display the job ID and tell you where to find the connection info once the job starts.
@@ -43,7 +43,7 @@ cat logs/positron-<JOB_ID>.out
 
 ## Key Configuration Parameters
 
-The SLURM directives in `alpine-positron.sh` control resource allocation:
+The SLURM directives in `positron-remote-alpine.sh` control resource allocation:
 
 - `--time`: Maximum job duration (currently 8 hours)
 - `--mem`: Memory allocation (currently 24gb)
@@ -55,7 +55,7 @@ These parameters should be adjusted based on computational requirements. Alpine 
 
 ## How It Works
 
-When you run `./alpine-positron.sh`:
+When you run `./positron-remote-alpine.sh`:
 1. The script checks if it's running under SLURM (via `$SLURM_JOB_ID`)
 2. If not, it submits itself to SLURM using `sbatch` and exits, displaying the job ID and log location
 3. When SLURM runs the script on a compute node, it displays the SSH connection info in the log file
