@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=positron-%j
+#SBATCH --job-name=positron
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --time=08:00:00
@@ -8,7 +8,7 @@
 #SBATCH --output=logs/positron-%j.out
 #SBATCH --partition=amilan
 #SBATCH --qos=normal
-#SBATCH --comment="positron-%j"
+#SBATCH --comment="positron"
 #SBATCH --export=ALL,POSITRON_SLURM_EXEC=true
 
 # Colors
@@ -68,6 +68,7 @@ show_connection_info() {
 if [ "${POSITRON_SLURM_EXEC}" != "true" ]; then
     mkdir -p logs
     JOB_ID=$(sbatch --parsable "$0")
+    scontrol update JobId=${JOB_ID} JobName="positron-${JOB_ID}" Comment="positron-${JOB_ID}"
 
     echo -e "${CYAN}========================================${NC}"
     echo -e "${GREEN}Positron job submitted${NC}"
