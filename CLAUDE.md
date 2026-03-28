@@ -4,14 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This repository contains a SLURM batch script for launching Positron (an IDE) on Alpine, the University of Colorado Boulder's HPC cluster. The script allocates compute resources and provides SSH connection instructions for remote development.
+This repository contains SLURM batch scripts for launching Positron (an IDE) on Alpine (CU Boulder) and amc-bodhi (CU Anschutz) HPC clusters. The scripts allocate compute resources and provide SSH connection instructions for remote development.
 
 ## Architecture
 
 The repository is intentionally minimal:
 
-- `positron-remote-alpine.sh`: SLURM batch script that allocates a compute node and provides connection details
-- The script uses a ProxyJump SSH configuration pattern to connect through the login node to the allocated compute node
+- `positron-remote-alpine.sh`: SLURM batch script for Alpine (CU Boulder)
+- `positron-remote-bodhi.sh`: SLURM batch script for amc-bodhi (CU Anschutz)
+- Both scripts use a ProxyJump SSH configuration pattern to connect through the login node to the allocated compute node
 
 ## Usage
 
@@ -56,7 +57,7 @@ These parameters should be adjusted based on computational requirements. Alpine 
 ## How It Works
 
 When you run `./positron-remote-alpine.sh`:
-1. The script checks if it's running under SLURM (via `$SLURM_JOB_ID`)
+1. The script checks if it's running under SLURM (via the `POSITRON_SLURM_EXEC` environment variable)
 2. If not, it submits itself to SLURM using `sbatch` and exits, displaying the job ID and log location
 3. When SLURM runs the script on a compute node, it displays the SSH connection info in the log file
 

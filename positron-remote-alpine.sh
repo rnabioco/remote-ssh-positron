@@ -56,6 +56,8 @@ show_connection_info() {
     echo "    User ${USER}"
     echo "    ProxyJump ${USER}@login-ci.rc.colorado.edu"
     echo "    ForwardAgent yes"
+    echo "    ServerAliveInterval 60"
+    echo "    ServerAliveCountMax 3"
     echo ""
     echo -e "Then connect to: ${GREEN}positron-alpine-${job_id}${NC}"
     echo ""
