@@ -63,6 +63,16 @@ do_setup() {
     echo -e "${CYAN}========================================${NC}"
     echo ""
 
+    # Prompt for cluster username (may differ from local username)
+    read -r -p "Cluster username [${USER}]: " REMOTE_USER
+    REMOTE_USER="${REMOTE_USER:-${USER}}"
+    echo ""
+
+    # Recalculate scratch dir with remote username
+    if [ -n "${SCRATCH_DIR}" ]; then
+        SCRATCH_DIR="/scratch/alpine/${REMOTE_USER}/.positron-server"
+    fi
+
     if $VPN_REQUIRED; then
         echo -e "${YELLOW}IMPORTANT: You must be connected to the AMC VPN${NC}"
         echo ""
@@ -70,9 +80,9 @@ do_setup() {
 
     # Step 1: SSH key exchange
     echo -e "${BLUE}Step 1: Copying SSH key to ${cluster}...${NC}"
-    echo -e "Running: ${CYAN}ssh-copy-id ${USER}@${LOGIN_HOST}${NC}"
+    echo -e "Running: ${CYAN}ssh-copy-id ${REMOTE_USER}@${LOGIN_HOST}${NC}"
     echo ""
-    ssh-copy-id "${USER}@${LOGIN_HOST}"
+    ssh-copy-id "${REMOTE_USER}@${LOGIN_HOST}"
 
     if [ $? -ne 0 ]; then
         echo -e "${YELLOW}ssh-copy-id failed. You may need to set up SSH access manually.${NC}"
@@ -86,11 +96,11 @@ do_setup() {
         echo -e "${BLUE}Step 2: Setting up Positron Server on scratch storage...${NC}"
         echo -e "Running remote command on ${cluster} to create symlink..."
         echo ""
-        ssh "${USER}@${LOGIN_HOST}" "mkdir -p ${SCRATCH_DIR} && ln -sf ${SCRATCH_DIR} ~/.positron-server && echo 'Symlink created: ~/.positron-server -> ${SCRATCH_DIR}'"
+        ssh "${REMOTE_USER}@${LOGIN_HOST}" "mkdir -p ${SCRATCH_DIR} && ln -sf ${SCRATCH_DIR} ~/.positron-server && echo 'Symlink created: ~/.positron-server -> ${SCRATCH_DIR}'"
 
         if [ $? -ne 0 ]; then
             echo -e "${YELLOW}Failed to create scratch symlink. You can do this manually:${NC}"
-            echo "  ssh ${USER}@${LOGIN_HOST}"
+            echo "  ssh ${REMOTE_USER}@${LOGIN_HOST}"
             echo "  mkdir -p ${SCRATCH_DIR}"
             echo "  ln -sf ${SCRATCH_DIR} ~/.positron-server"
             echo ""
