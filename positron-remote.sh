@@ -199,6 +199,18 @@ fi
 CLUSTER="${1:-alpine}"
 get_cluster_config "$CLUSTER"
 
+# Verify we're on the cluster (sbatch must be available)
+if ! command -v sbatch &>/dev/null; then
+    echo -e "${YELLOW}Error: sbatch not found. This command must be run from the cluster login node.${NC}"
+    echo ""
+    echo "To submit a job, SSH into the cluster first:"
+    echo -e "  ${CYAN}ssh ${USER}@${LOGIN_HOST}${NC}"
+    echo ""
+    echo "For first-time setup from your local machine:"
+    echo -e "  ${CYAN}$0 setup ${CLUSTER}${NC}"
+    exit 1
+fi
+
 # Submit to SLURM
 mkdir -p logs
 JOB_ID=$(sbatch --parsable \
