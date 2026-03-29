@@ -4,10 +4,10 @@ Launch [Positron](https://github.com/posit-dev/positron) on Alpine (CU Boulder) 
 
 ## Overview
 
-These scripts allocate a compute node on your HPC cluster and provide SSH connection instructions for remote development with Positron. The scripts use a ProxyJump SSH configuration to connect through the login node to your allocated compute node.
+This script allocates a compute node on your HPC cluster and provides SSH connection instructions for remote development with Positron. It uses a ProxyJump SSH configuration to connect through the login node to your allocated compute node.
 
-- **Alpine** (CU Boulder): Uses SLURM job scheduler (`positron-remote-alpine.sh`)
-- **amc-bodhi** (CU Anschutz): Uses SLURM job scheduler (`positron-remote-bodhi.sh`)
+- **Alpine** (CU Boulder): Uses SLURM job scheduler
+- **amc-bodhi** (CU Anschutz): Uses SLURM job scheduler
 
 ## Prerequisites
 
@@ -18,54 +18,28 @@ These scripts allocate a compute node on your HPC cluster and provide SSH connec
 
 ## Setup (One-time)
 
-### 1. Add your local machine's SSH key to Alpine
+Run the setup command from your **local machine**:
 
-If you haven't already, you need to add your local machine's public SSH key to Alpine's authorized_keys file. This allows your local machine to authenticate with Alpine compute nodes via the ProxyJump connection.
-
-1. **On your local machine**, copy your public key:
-   ```bash
-   cat ~/.ssh/id_rsa.pub
-   ```
-   Or if you use a different key:
-   ```bash
-   cat ~/.ssh/id_ed25519.pub
-   ```
-
-2. **Log into Alpine** and add the key to authorized_keys:
-   ```bash
-   ssh <your-username>@login.rc.colorado.edu
-   ```
-
-3. **On Alpine**, add your public key:
-   ```bash
-   mkdir -p ~/.ssh
-   chmod 700 ~/.ssh
-   echo "your-public-key-content" >> ~/.ssh/authorized_keys
-   chmod 600 ~/.ssh/authorized_keys
-   ```
-
-   Replace `your-public-key-content` with the output from step 1.
-
-### 2. Configure Positron Server location on Alpine
-
-By default, Positron installs its server components to `~/.positron-server`, but `$HOME` on Alpine has limited space. To avoid filling up your home directory, set up Positron Server on `/scratch/alpine`:
-
-**On Alpine** (login or compute node):
 ```bash
-# Create directory on scratch (larger allocation)
-mkdir -p /scratch/alpine/${USER}/.positron-server
+# For Alpine:
+./positron-remote.sh setup alpine
 
-# Create symlink from home to scratch
-ln -s /scratch/alpine/${USER}/.positron-server ~/.positron-server
+# For amc-bodhi:
+./positron-remote.sh setup bodhi
 ```
 
-**Important notes:**
+This will:
+1. Copy your local SSH public key to the cluster (via `ssh-copy-id`)
+2. Create a Positron Server symlink on scratch storage (Alpine only — `$HOME` has limited space, `/scratch/alpine` has more room)
+3. Print recommended Positron settings
+
+**Important notes (Alpine):**
 - `/scratch/alpine` is purged every 90 days of files not accessed
 - If the directory is purged, Positron will automatically reinstall the server when you next connect
-- You may need to recreate the symlink if it's removed: `ln -s /scratch/alpine/${USER}/.positron-server ~/.positron-server`
+- You may need to re-run `./positron-remote.sh setup alpine` to recreate the symlink
 - For more details on how Positron Remote-SSH works, see: https://positron.posit.co/remote-ssh.html#how-it-works-troubleshooting
 
-### 3. Recommended Positron Settings
+### Recommended Positron Settings
 
 By default, R and Python sessions terminate when Positron disconnects. On HPC, brief network interruptions are common and you don't want to lose your session within a running SLURM allocation. Add this to your Positron `settings.json` (local machine):
 
@@ -82,7 +56,7 @@ This keeps R/Python sessions alive on the remote host so you can reconnect witho
 ### 1. Submit the job to Alpine
 
 ```bash
-sbatch positron-remote-alpine.sh
+./positron-remote.sh alpine
 ```
 
 ### 2. Check job status
@@ -109,7 +83,7 @@ Replace `<JOB_ID>` with your actual job ID from `squeue`.
 - Paste in your SSH config (from the log file) and save:
 
   ```
-  Host positron-<JOB_ID>
+  Host positron-alpine-<JOB_ID>
       HostName <compute-node>
       User <your-username>
       ProxyJump <your-username>@login-ci.rc.colorado.edu
@@ -119,7 +93,7 @@ Replace `<JOB_ID>` with your actual job ID from `squeue`.
   ```
 
 - Select "Remote-SSH: Connect to Host"
-- Choose `positron-<JOB_ID>` from the list
+- Choose `positron-alpine-<JOB_ID>` from the list
 - Positron will install its server components on the remote node automatically
 
 ### 5. When finished
@@ -136,7 +110,7 @@ Always cancel your job to free resources:
 ### 1. Submit the job to amc-bodhi
 
 ```bash
-bash positron-remote-bodhi.sh
+./positron-remote.sh bodhi
 ```
 
 ### 2. Check job status
@@ -185,25 +159,16 @@ scancel <JOB_ID>
 
 ## Configuration
 
-### Alpine (`positron-remote-alpine.sh`)
+Resources are configured via SLURM directives in `positron-remote.sh`. Default values per cluster:
 
-Resources are configured via SLURM directives:
-
-- `--time=08:00:00` - Maximum job duration (8 hours)
-- `--mem=24gb` - Memory allocation (24 GB)
-- `--partition=amilan` - Alpine partition for general compute
-- `--qos=normal` - Quality of service tier
+| Setting | Alpine | amc-bodhi |
+|---------|--------|-----------|
+| `--time` | 8 hours | 8 hours |
+| `--mem` | 24 GB | 20 GB |
+| `--partition` | amilan | normal |
+| `--qos` | normal | normal |
 
 See [Alpine documentation](https://curc.readthedocs.io/en/latest/compute/alpine.html) for available options.
-
-### amc-bodhi (`positron-remote-bodhi.sh`)
-
-Resources are configured via SLURM directives:
-
-- `--time=08:00:00` - Maximum job duration (8 hours)
-- `--mem=20gb` - Memory allocation (20 GB)
-- `--partition=normal` - Partition for general compute
-- `--qos=normal` - Quality of service tier
 
 ## Troubleshooting
 
@@ -216,12 +181,12 @@ Resources are configured via SLURM directives:
 - Ensure SSH config was added to your **local** `~/.ssh/config` (not on Alpine)
 - Verify job is running: `squeue -u $USER`
 - Check log file for correct hostname and job ID
-- Verify your local SSH public key is in Alpine's `~/.ssh/authorized_keys` (see Setup section)
+- Verify your local SSH public key is on the cluster (re-run `./positron-remote.sh setup alpine`)
 
 ### Connection drops
 - SSH connection may timeout if idle. The job itself will continue running.
 - Reconnect using the same SSH host entry.
-- The SSH config generated by the scripts includes `ServerAliveInterval` and `ServerAliveCountMax` to reduce idle timeouts.
+- The SSH config generated by the script includes `ServerAliveInterval` and `ServerAliveCountMax` to reduce idle timeouts.
 
 ### Connection fails after updating Positron
 - The Positron client and server must be **exactly the same version**. If you update Positron on your local machine, the remote `~/.positron-server` may have an old version.
