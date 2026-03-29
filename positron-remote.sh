@@ -30,8 +30,10 @@ get_cluster_config() {
             VPN_REQUIRED=false
             ;;
         bodhi)
-            PARTITION="normal"
-            MEM="20gb"
+            PARTITION="positron"
+            QOS="positron"
+            CPUS=8
+            MEM="24G"
             PROXY_HOST="amc-bodhi.ucdenver.pvt"
             LOGIN_HOST="amc-bodhi.ucdenver.pvt"
             HOST_PREFIX="positron-bodhi"
@@ -211,13 +213,35 @@ if ! command -v sbatch &>/dev/null; then
     exit 1
 fi
 
+# Verify user has access to the partition
+if ! sacctmgr show associations user=$USER format=QOS%80 -n -p 2>/dev/null | grep -q "${QOS:-${PARTITION}}"; then
+    echo -e "${YELLOW}Error: You do not have access to the '${QOS:-${PARTITION}}' QOS.${NC}"
+    echo ""
+    echo "Your current partition associations:"
+    sacctmgr show associations user=$USER format=Account,Partition,QOS
+    exit 1
+fi
+
+# Check for existing job on this partition
+EXISTING_JOB=$(squeue -u $USER -p "${PARTITION}" -h -o "%i %T" 2>/dev/null | head -1)
+if [ -n "${EXISTING_JOB}" ]; then
+    EXISTING_ID=$(echo "${EXISTING_JOB}" | awk '{print $1}')
+    EXISTING_STATE=$(echo "${EXISTING_JOB}" | awk '{print $2}')
+    echo -e "${YELLOW}You already have a ${EXISTING_STATE} job on the '${PARTITION}' partition (Job ${EXISTING_ID}).${NC}"
+    echo -e "This partition only allows 1 job per user."
+    echo ""
+    echo -e "View log:    ${CYAN}cat logs/positron-${EXISTING_ID}.out${NC}"
+    echo -e "Cancel it:   ${CYAN}scancel ${EXISTING_ID}${NC}"
+    exit 1
+fi
+
 # Submit to SLURM
 mkdir -p logs
-JOB_ID=$(sbatch --parsable \
-    --partition="${PARTITION}" \
-    --mem="${MEM}" \
-    --export="ALL,POSITRON_SLURM_EXEC=true,POSITRON_CLUSTER=${CLUSTER}" \
-    "$0")
+SBATCH_ARGS=(--parsable --partition="${PARTITION}" --mem="${MEM}")
+[ -n "${QOS}" ] && SBATCH_ARGS+=(--qos="${QOS}")
+[ -n "${CPUS}" ] && SBATCH_ARGS+=(--cpus-per-task="${CPUS}")
+SBATCH_ARGS+=(--export="ALL,POSITRON_SLURM_EXEC=true,POSITRON_CLUSTER=${CLUSTER}")
+JOB_ID=$(sbatch "${SBATCH_ARGS[@]}" "$0")
 scontrol update JobId=${JOB_ID} JobName="positron-${JOB_ID}" Comment="positron-${JOB_ID}"
 
 echo -e "${CYAN}========================================${NC}"
