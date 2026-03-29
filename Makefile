@@ -1,12 +1,12 @@
 PREFIX := $(HOME)/.local/bin
-SCRIPTS := positron-remote-alpine.sh positron-remote-bodhi.sh
+SCRIPT := positron-remote.sh
 
 .PHONY: install uninstall
 
 install:
 	mkdir -p $(PREFIX)
-	cp $(SCRIPTS) $(PREFIX)/
-	chmod +x $(addprefix $(PREFIX)/,$(SCRIPTS))
+	cp $(SCRIPT) $(PREFIX)/
+	chmod +x $(PREFIX)/$(SCRIPT)
 
 uninstall:
-	rm -f $(addprefix $(PREFIX)/,$(SCRIPTS))
+	rm -f $(PREFIX)/$(SCRIPT)
