@@ -8,11 +8,10 @@ Launch [Positron](https://github.com/posit-dev/positron) on **Alpine** (CU Bould
 
 The script allocates a compute node on your HPC cluster via SLURM and provides SSH connection instructions for remote development with Positron. It uses a **ProxyJump** SSH pattern to connect through the login node to your allocated compute node.
 
-```
-┌──────────────┐       ┌──────────────┐       ┌──────────────┐
-│  Your Machine│──SSH──▶│  Login Node  │──SSH──▶│ Compute Node │
-│  (Positron)  │       │  (gateway)   │       │ (workspace)  │
-└──────────────┘       └──────────────┘       └──────────────┘
+```mermaid
+graph LR
+  A["🖥️ Your Machine\n(Positron)"] -->|SSH| B["🌐 Login Node\n(gateway)"]
+  B -->|ProxyJump| C["⚡ Compute Node\n(workspace)"]
 ```
 
 The workflow is three steps:
