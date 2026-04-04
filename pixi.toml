@@ -1,0 +1,15 @@
+[workspace]
+name = "remote-ssh-positron"
+version = "0.1.0"
+description = "Documentation site for Positron Remote SSH"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64"]
+
+[dependencies]
+python = ">=3.11"
+zensical = "*"
+
+[tasks]
+docs = "zensical serve"
+build = "zensical build"
+deploy = "zensical build --clean"

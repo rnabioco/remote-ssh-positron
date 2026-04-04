@@ -1,3 +1,13 @@
 logs/
 slurm-*.out
 slurm-*.err
+
+# Pixi
+.pixi/
+
+# Zensical build output
+site/
+
+# Python
+__pycache__/
+*.pyc

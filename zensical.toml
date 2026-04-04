@@ -1,0 +1,59 @@
+[project]
+site_name = "Positron Remote SSH"
+site_url = "https://rnabioco.github.io/remote-ssh-positron/"
+repo_url = "https://github.com/rnabioco/remote-ssh-positron"
+repo_name = "rnabioco/remote-ssh-positron"
+
+nav = [
+  {"Home" = "index.md"},
+  {"Quick Start" = "quickstart.md"},
+  {"Setup" = "setup.md"},
+  {"Configuration" = "configuration.md"},
+  {"Troubleshooting" = "troubleshooting.md"},
+]
+
+[project.theme]
+variant = "classic"
+features = [
+  "content.code.copy",
+  "content.tabs.link",
+  "navigation.instant",
+  "navigation.sections",
+  "navigation.top",
+  "toc.follow",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "teal"
+accent = "amber"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "teal"
+accent = "amber"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+[project.markdown_extensions.admonition]
+
+[project.markdown_extensions.pymdownx.details]
+
+[project.markdown_extensions.pymdownx.superfences]
+
+[project.markdown_extensions.pymdownx.tabbed]
+alternate_style = true
+
+[project.markdown_extensions.pymdownx.highlight]
+anchor_linenums = true
+
+[project.markdown_extensions.pymdownx.inlinehilite]
+
+[project.markdown_extensions.tables]
+
+[project.markdown_extensions.toc]
+permalink = true
