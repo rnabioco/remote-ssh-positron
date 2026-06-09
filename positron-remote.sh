@@ -3,11 +3,11 @@
 #SBATCH --job-name=positron
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --time=08:00:00
 #SBATCH --output=logs/positron-%j.out
 #SBATCH --qos=normal
 #SBATCH --comment="positron"
-#SBATCH --export=ALL,POSITRON_SLURM_EXEC=true
+# Note: --export is set at submission time (see SBATCH_ARGS below) so the
+# selected cluster propagates to the SLURM execution; no need to set it here.
 
 # Colors
 GREEN='\033[0;32m'
@@ -22,7 +22,11 @@ get_cluster_config() {
     case $cluster in
         alpine)
             PARTITION="amilan"
+            # amilan bills max(cores, mem/3.8GB). 8 cores entitles ~30GB, so
+            # 24gb is billed by cores and you get all 8. QOS 'normal' = 24h max.
+            CPUS=8
             MEM="24gb"
+            TIME="24:00:00"
             PROXY_HOST="login-ci.rc.colorado.edu"
             LOGIN_HOST="login.rc.colorado.edu"
             HOST_PREFIX="positron-alpine"
@@ -34,6 +38,7 @@ get_cluster_config() {
             QOS="positron"
             CPUS=8
             MEM="24G"
+            TIME="08:00:00"
             PROXY_HOST="amc-bodhi.ucdenver.pvt"
             LOGIN_HOST="amc-bodhi.ucdenver.pvt"
             HOST_PREFIX="positron-bodhi"
@@ -213,13 +218,17 @@ if ! command -v sbatch &>/dev/null; then
     exit 1
 fi
 
-# Verify user has access to the partition
-if ! sacctmgr show associations user=$USER format=QOS%80 -n -p 2>/dev/null | grep -q "${QOS:-${PARTITION}}"; then
-    echo -e "${YELLOW}Error: You do not have access to the '${QOS:-${PARTITION}}' QOS.${NC}"
-    echo ""
-    echo "Your current partition associations:"
-    sacctmgr show associations user=$USER format=Account,Partition,QOS
-    exit 1
+# Verify user has access to the QOS (only for clusters that gate on a
+# dedicated QOS, e.g. bodhi's 'positron'). Alpine's 'amilan' is a general
+# partition with no special QOS, so there's nothing to pre-check there.
+if [ -n "${QOS}" ]; then
+    if ! sacctmgr show associations user=$USER format=QOS%80 -n -p 2>/dev/null | grep -q "${QOS}"; then
+        echo -e "${YELLOW}Error: You do not have access to the '${QOS}' QOS.${NC}"
+        echo ""
+        echo "Your current partition associations:"
+        sacctmgr show associations user=$USER format=Account,Partition,QOS
+        exit 1
+    fi
 fi
 
 # Check for existing job on this partition
@@ -240,8 +249,12 @@ mkdir -p logs
 SBATCH_ARGS=(--parsable --partition="${PARTITION}" --mem="${MEM}")
 [ -n "${QOS}" ] && SBATCH_ARGS+=(--qos="${QOS}")
 [ -n "${CPUS}" ] && SBATCH_ARGS+=(--cpus-per-task="${CPUS}")
+[ -n "${TIME}" ] && SBATCH_ARGS+=(--time="${TIME}")
 SBATCH_ARGS+=(--export="ALL,POSITRON_SLURM_EXEC=true,POSITRON_CLUSTER=${CLUSTER}")
-JOB_ID=$(sbatch "${SBATCH_ARGS[@]}" "$0")
+JOB_ID=$(sbatch "${SBATCH_ARGS[@]}" "$0") || {
+    echo -e "${YELLOW}Error: sbatch failed to submit the job.${NC}"
+    exit 1
+}
 scontrol update JobId=${JOB_ID} JobName="positron-${JOB_ID}" Comment="positron-${JOB_ID}"
 
 echo -e "${CYAN}========================================${NC}"
