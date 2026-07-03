@@ -16,16 +16,24 @@ graph LR
 
 The workflow is three steps:
 
-1. **Setup** — copy SSH keys and configure scratch storage (once per cluster)
+1. **Setup** — copy SSH keys, configure scratch storage, and write a reusable SSH alias (once per cluster)
 2. **Submit** — run the script on the cluster to allocate a compute node
-3. **Connect** — paste the SSH config into Positron and connect
+3. **Connect** — choose the `positron-<cluster>` alias in Positron and connect
+
+!!! info "Resource enforcement"
+    Positron connects by SSH-ing directly to the compute node. Whether the
+    `positron-server` process is held to your allocation's CPU/memory limits depends on
+    the cluster running [`pam_slurm_adopt`](https://slurm.schedmd.com/pam_slurm_adopt.html),
+    which adopts inbound SSH sessions into your running job. To verify, run
+    `cat /proc/self/cgroup` in a Positron terminal after connecting — an adopted session
+    shows a path containing `job_<your-job-id>`.
 
 ## Supported Clusters
 
-| Cluster | Institution | Partition | Memory | CPUs | VPN Required |
-|---------|-------------|-----------|--------|------|--------------|
-| **Alpine** | CU Boulder Research Computing | `amilan` | 24 GB | 4 | No |
-| **amc-bodhi** | CU Anschutz Medical Campus | `positron` | 24 GB | 8 | Yes |
+| Cluster | Institution | Partition | Memory | CPUs | Time | VPN Required |
+|---------|-------------|-----------|--------|------|------|--------------|
+| **Alpine** | CU Boulder Research Computing | `amilan` | 24 GB | 8 | 24 h | No |
+| **amc-bodhi** | CU Anschutz Medical Campus | `positron` | 24 GB | 8 | 8 h | Yes |
 
 ## Prerequisites
 

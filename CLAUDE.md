@@ -11,10 +11,12 @@ This repository contains a unified SLURM batch script for launching Positron (an
 The repository is intentionally minimal:
 
 - `positron-remote.sh`: Unified SLURM batch script supporting both Alpine and amc-bodhi clusters
-  - Cluster-specific config (partition, memory, proxy host) via a `case` statement
-  - `setup` subcommand automates SSH key exchange and scratch symlink creation
+  - Cluster-specific config (partition, memory, proxy host, account) via a `case` statement in `get_cluster_config()`
+  - A subcommand dispatcher: `setup`, `status`, `connect`, `stop`, `reset`, plus a bare cluster arg to submit
+  - `setup` automates SSH key exchange, scratch symlink creation, and writing a stable `positron-<cluster>` SSH alias to the local `~/.ssh/config`
   - Cluster is selected via argument: `./positron-remote.sh alpine` or `./positron-remote.sh bodhi`
-- Uses a ProxyJump SSH configuration pattern to connect through the login node to the allocated compute node
+  - The in-allocation payload traps SIGTERM for graceful `positron-server` shutdown and optionally auto-releases the node after an idle period
+- Uses a ProxyJump/ProxyCommand SSH pattern to connect through the login node to the allocated compute node
 
 ## Usage
 
@@ -24,20 +26,18 @@ Submit the job (the script self-submits to SLURM):
 ./positron-remote.sh bodhi     # amc-bodhi
 ```
 
-One-time setup (run from local machine):
+One-time setup (run from local machine — also writes a stable `positron-<cluster>` SSH alias to `~/.ssh/config`):
 ```bash
 ./positron-remote.sh setup alpine
 ./positron-remote.sh setup bodhi
 ```
 
-Monitor job status:
+Management subcommands (run from the cluster login node; each takes `alpine` or `bodhi`):
 ```bash
-squeue -u $USER
-```
-
-Cancel the job when done:
-```bash
-scancel <JOB_ID>
+./positron-remote.sh status alpine    # state, node, time left
+./positron-remote.sh connect alpine   # reprint connection instructions
+./positron-remote.sh stop alpine      # cancel the job
+./positron-remote.sh reset alpine     # wipe the remote ~/.positron-server (version drift)
 ```
 
 View connection info:
@@ -47,13 +47,18 @@ cat logs/positron-<JOB_ID>.out
 
 ## Key Configuration Parameters
 
-Cluster-specific SLURM settings are passed via `sbatch` CLI overrides:
+Cluster-specific SLURM settings live in `get_cluster_config()` and are passed via `sbatch` CLI overrides:
 
-- `--time`: Maximum job duration (currently 8 hours)
-- `--mem`: Memory allocation (24gb Alpine, 20gb bodhi)
-- `--cpus-per-task`: Number of CPU cores (currently 4)
-- `--partition`: Cluster partition (amilan for Alpine, normal for bodhi)
-- `--qos`: Quality of service tier
+- `--time`: Maximum job duration (24h Alpine, 8h bodhi)
+- `--mem`: Memory allocation (24gb Alpine, 24G bodhi)
+- `--cpus-per-task`: Number of CPU cores (8 on both)
+- `--partition`: Cluster partition (amilan for Alpine, positron for bodhi)
+- `--qos`: Quality of service tier (normal for Alpine, positron for bodhi)
+
+Optional environment variables (read at submit time):
+
+- `POSITRON_ACCOUNT`: SLURM account/allocation to bill (Alpine); defaults to the user's default allocation
+- `POSITRON_IDLE_TIMEOUT`: minutes with no active SSH session before the job auto-`scancel`s itself (`0` = disabled)
 
 These parameters should be adjusted based on computational requirements. Alpine documentation: https://curc.readthedocs.io/en/latest/compute/alpine.html
 
@@ -67,13 +72,21 @@ When you run `./positron-remote.sh alpine`:
 
 ## SSH Configuration Pattern
 
-The script generates a temporary SSH config entry using:
-1. **ProxyJump**: Routes connection through the cluster's login node
-2. **Dynamic hostname**: Uses the allocated compute node's hostname
-3. **Job-specific alias**: `positron-{alpine|bodhi}-${SLURM_JOB_ID}` for easy identification
-4. **ForwardAgent**: Enables SSH agent forwarding for git operations on the compute node
+There are two connection paths:
 
-This pattern enables Positron's Remote-SSH extension to connect directly to the compute node while respecting the cluster's security model.
+1. **Stable alias (preferred)**: `setup` writes a `positron-<cluster>` `Host` block to the
+   local `~/.ssh/config` whose `ProxyCommand` SSHes to the login node and runs `squeue` to
+   resolve the *currently running* Positron node on the fly (`nc <node> 22`). This lets the
+   user reconnect to any future job/node without editing SSH config. The block is written
+   idempotently between `# >>> positron-remote <cluster> >>>` markers. Host-key checking is
+   disabled for this alias because the underlying compute node changes between jobs.
+2. **Job-specific fallback**: `show_connection_info` also prints an explicit
+   `positron-<cluster>-${SLURM_JOB_ID}` block using **ProxyJump** + the allocated node's
+   hostname, for users who skipped `setup`.
+
+Both use **ForwardAgent** for git operations on the compute node. This pattern enables
+Positron's Remote-SSH extension to connect directly to the compute node while respecting
+the cluster's security model.
 
 ## Prerequisites
 

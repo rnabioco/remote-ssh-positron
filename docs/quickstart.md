@@ -40,46 +40,36 @@ Replace `<JOB_ID>` with your actual job ID from `squeue`.
 
 ## 4. Connect from Positron
 
+If you ran [Setup](setup.md), a stable `positron-<cluster>` alias is already in your
+local `~/.ssh/config` and resolves the current node automatically — no editing needed:
+
 1. Open Positron on your **local machine**
 2. Press ++cmd+shift+p++ (Mac) or ++ctrl+shift+p++ (Windows/Linux)
-3. Select **Remote-SSH: Open SSH Configuration File**
-4. Paste the SSH config from the log file and save:
+3. Select **Remote-SSH: Connect to Host**
+4. Choose `positron-alpine` (or `positron-bodhi`)
+5. Positron will install its server components on the remote node automatically
 
-=== "Alpine"
+!!! tip "Didn't run setup?"
+    The log file (`cat logs/positron-<JOB_ID>.out`) also prints an explicit
+    job-specific `Host` block you can paste into `~/.ssh/config` as a fallback.
 
-    ```
-    Host positron-alpine-<JOB_ID>
-        HostName <compute-node>
-        User <your-username>
-        ProxyJump <your-username>@login-ci.rc.colorado.edu
-        ForwardAgent yes
-        ServerAliveInterval 60
-        ServerAliveCountMax 3
-    ```
+## 5. Manage the Job
 
-=== "amc-bodhi"
+```bash
+./positron-remote.sh status alpine    # state, node, time left
+./positron-remote.sh connect alpine   # reprint connection instructions
+./positron-remote.sh stop alpine      # cancel the job
+```
 
-    ```
-    Host positron-bodhi-<JOB_ID>
-        HostName <compute-node>
-        User <your-username>
-        ProxyJump <your-username>@amc-bodhi.ucdenver.pvt
-        ForwardAgent yes
-        ServerAliveInterval 60
-        ServerAliveCountMax 3
-    ```
-
-5. Select **Remote-SSH: Connect to Host**
-6. Choose your `positron-{alpine|bodhi}-<JOB_ID>` entry
-7. Positron will install its server components on the remote node automatically
-
-## 5. When Finished
+## 6. When Finished
 
 Always cancel your job to free resources:
 
 ```bash
-scancel <JOB_ID>
+./positron-remote.sh stop alpine      # or: scancel <JOB_ID>
 ```
 
 !!! warning
-    The compute node allocation runs for the full time requested (8 hours by default) or until you cancel it. Always `scancel` when done.
+    The compute node allocation runs for the full time requested (Alpine 24 h,
+    amc-bodhi 8 h) or until you cancel it. Always stop it when done — or submit with
+    `POSITRON_IDLE_TIMEOUT=<minutes>` to auto-release after an idle period.

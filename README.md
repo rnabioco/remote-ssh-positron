@@ -31,7 +31,8 @@ Run the setup command from your **local machine**:
 This will:
 1. Copy your local SSH public key to the cluster (via `ssh-copy-id`)
 2. Create a Positron Server symlink on scratch storage (Alpine only — `$HOME` has limited space, `/scratch/alpine` has more room)
-3. Print recommended Positron settings
+3. Write a stable `positron-<cluster>` alias to your local `~/.ssh/config` so you can reconnect to any future job without editing SSH config
+4. Print recommended Positron settings
 
 **Important notes (Alpine):**
 - `/scratch/alpine` is purged every 90 days of files not accessed
@@ -77,30 +78,35 @@ Replace `<JOB_ID>` with your actual job ID from `squeue`.
 
 ### 4. Connect from Positron
 
+If you ran setup, the stable alias is already in your `~/.ssh/config` and resolves the current node automatically:
+
 - Open Positron on your **local machine**
-   - Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
-   - Select "Remote-SSH: Open SSH Configuration File"
-- Paste in your SSH config (from the log file) and save:
-
-  ```
-  Host positron-alpine-<JOB_ID>
-      HostName <compute-node>
-      User <your-username>
-      ProxyJump <your-username>@login-ci.rc.colorado.edu
-      ForwardAgent yes
-      ServerAliveInterval 60
-      ServerAliveCountMax 3
-  ```
-
+- Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
 - Select "Remote-SSH: Connect to Host"
-- Choose `positron-alpine-<JOB_ID>` from the list
+- Choose `positron-alpine`
 - Positron will install its server components on the remote node automatically
+
+<details>
+<summary>Didn't run setup? Paste a job-specific block instead</summary>
+
+The log file also prints an explicit block you can add to your local `~/.ssh/config`:
+
+```
+Host positron-alpine-<JOB_ID>
+    HostName <compute-node>
+    User <your-username>
+    ProxyJump <your-username>@login-ci.rc.colorado.edu
+    ForwardAgent yes
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+```
+</details>
 
 ### 5. When finished
 
-Always cancel your job to free resources:
+Always stop your job to free resources:
    ```bash
-   scancel <JOB_ID>
+   ./positron-remote.sh stop alpine    # or: scancel <JOB_ID>
    ```
 
 ## Quick Start (amc-bodhi)
@@ -131,30 +137,46 @@ Replace `<JOB_ID>` with your actual job ID from `squeue`.
 
 ### 4. Connect from Positron
 
+If you ran setup, the stable alias is already in your `~/.ssh/config` and resolves the current node automatically:
+
 - Open Positron on your **local machine**
-   - Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
-   - Select "Remote-SSH: Open SSH Configuration File"
-- Paste in your SSH config (from the log file) and save:
-
-  ```
-  Host positron-bodhi-<JOB_ID>
-      HostName <compute-node>
-      User <your-username>
-      ProxyJump <your-username>@amc-bodhi.ucdenver.pvt
-      ForwardAgent yes
-      ServerAliveInterval 60
-      ServerAliveCountMax 3
-  ```
-
+- Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
 - Select "Remote-SSH: Connect to Host"
-- Choose `positron-bodhi-<JOB_ID>` from the list
+- Choose `positron-bodhi`
 - Positron will install its server components on the remote node automatically
+
+<details>
+<summary>Didn't run setup? Paste a job-specific block instead</summary>
+
+The log file also prints an explicit block you can add to your local `~/.ssh/config`:
+
+```
+Host positron-bodhi-<JOB_ID>
+    HostName <compute-node>
+    User <your-username>
+    ProxyJump <your-username>@amc-bodhi.ucdenver.pvt
+    ForwardAgent yes
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+```
+</details>
 
 ### 5. When finished
 
-Always cancel your job to free resources:
+Always stop your job to free resources:
 ```bash
-scancel <JOB_ID>
+./positron-remote.sh stop bodhi    # or: scancel <JOB_ID>
+```
+
+## Managing your job
+
+All subcommands take the cluster name (`alpine` or `bodhi`):
+
+```bash
+./positron-remote.sh status alpine    # state, node, and time left
+./positron-remote.sh connect alpine   # reprint connection instructions
+./positron-remote.sh stop alpine      # cancel the job
+./positron-remote.sh reset alpine     # wipe the remote server (fixes version drift)
 ```
 
 ## Configuration
@@ -163,10 +185,16 @@ Resources are configured via SLURM directives in `positron-remote.sh`. Default v
 
 | Setting | Alpine | amc-bodhi |
 |---------|--------|-----------|
-| `--time` | 8 hours | 8 hours |
-| `--mem` | 24 GB | 20 GB |
-| `--partition` | amilan | normal |
-| `--qos` | normal | normal |
+| `--time` | 24 hours | 8 hours |
+| `--mem` | 24 GB | 24 GB |
+| `--partition` | amilan | positron |
+| `--qos` | normal | positron |
+| `--cpus-per-task` | 8 | 8 |
+
+Optional environment variables at submit time:
+
+- `POSITRON_ACCOUNT` — SLURM account/allocation to bill (Alpine; defaults to your default allocation)
+- `POSITRON_IDLE_TIMEOUT` — minutes with no SSH session before the job auto-releases (`0` = off)
 
 See [Alpine documentation](https://curc.readthedocs.io/en/latest/compute/alpine.html) for available options.
 

@@ -25,7 +25,19 @@ Setup will:
 
 1. Copy your local SSH public key to the cluster (via `ssh-copy-id`)
 2. Create a Positron Server symlink on scratch storage (Alpine only)
-3. Print recommended Positron settings
+3. Write a stable `positron-<cluster>` alias to your local `~/.ssh/config`
+4. Print recommended Positron settings
+
+## Reconnecting Without Editing
+
+Every job lands on a different compute node, but the alias written in step 3 resolves
+the current node automatically. After setup you never edit `~/.ssh/config` again — just
+submit a job and connect to `positron-alpine` (or `positron-bodhi`) in Positron.
+
+The alias uses a dynamic `ProxyCommand` that runs `squeue` on the login node to find
+your running Positron job, so it requires `nc` (netcat) on the login node — available by
+default on the CURC and AMC login nodes. Host-key checking is disabled for this alias
+because the underlying compute node changes between jobs.
 
 ## Recommended Positron Settings
 
