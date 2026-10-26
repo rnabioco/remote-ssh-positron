@@ -6,6 +6,15 @@
 - Check available resources: `sinfo`
 - Verify your account has hours: `curc-quota`
 
+## `invalid qos specification` (Bodhi)
+
+The `positron` QOS is attached to the `rbi` account only. If your Slurm default account
+is something else (for example `normal`), a job submitted without `--account` is rejected.
+`positron-remote.sh` submits with `--account=rbi` by default; if you override
+`POSITRON_ACCOUNT` with an account that lacks the QOS, it stops before submitting and
+lists your associations. Check which accounts carry it with
+`sacctmgr show assoc user=$USER format=Account,QOS%60`.
+
 ## Can't Connect via SSH
 
 - Ensure SSH config was added to your **local** `~/.ssh/config` (not on the cluster)

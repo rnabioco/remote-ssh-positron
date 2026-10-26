@@ -32,7 +32,7 @@ The workflow is three steps:
 
 | Cluster | Institution | Partition | Memory | CPUs | Time | VPN Required |
 |---------|-------------|-----------|--------|------|------|--------------|
-| **Alpine** | CU Boulder Research Computing | `amilan` | 24 GB | 8 | 24 h | No |
+| **Alpine** | CU Boulder Research Computing | `acpu` | 24 GB | 8 | 24 h | No |
 | **amc-bodhi** | CU Anschutz Medical Campus | `positron` | 24 GB | 8 | 8 h | Yes |
 
 ## Prerequisites
