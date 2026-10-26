@@ -8,8 +8,8 @@ Resources are configured via SLURM directives in `positron-remote.sh`.
 |---------|--------|-----------|
 | `--time` | 24 hours | 8 hours |
 | `--mem` | 24 GB | 24 GB |
-| `--partition` | `amilan` | `positron` |
-| `--qos` | `normal` | `positron` |
+| `--partition` | `acpu` | `positron` |
+| `--qos` | `cpu-normal` | `positron` |
 | `--cpus-per-task` | 8 | 8 |
 
 ## Billing Account
@@ -26,7 +26,7 @@ On Alpine, jobs bill against a project allocation. If you belong to more than on
 which account to charge with the `POSITRON_ACCOUNT` environment variable:
 
 ```bash
-POSITRON_ACCOUNT=ucb-general ./positron-remote.sh alpine
+POSITRON_ACCOUNT=amc-general ./positron-remote.sh alpine
 ```
 
 If unset, SLURM uses your default allocation. List your accounts with

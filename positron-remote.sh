@@ -9,7 +9,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --output=logs/positron-%j.out
-#SBATCH --qos=normal
+#SBATCH --qos=cpu-normal
 #SBATCH --comment="positron"
 # Note: --export, --job-name, --partition, etc. are set at submission time (see
 # SBATCH_ARGS below) so the selected cluster and its resources propagate to the
@@ -26,11 +26,13 @@ NC='\033[0m' # No Color
 get_cluster_config() {
     local cluster=$1
     ACCOUNT=""   # optional; overridden by POSITRON_ACCOUNT at submit time
+    QOS_GATED=false   # true when the QOS is restricted to certain accounts (checked before submit)
     case $cluster in
         alpine)
-            PARTITION="amilan"
-            # amilan bills max(cores, mem/3.8GB). 8 cores entitles ~30GB, so
-            # 24gb is billed by cores and you get all 8. QOS 'normal' = 24h max.
+            PARTITION="acpu"
+            QOS="cpu-normal"
+            # acpu bills max(cores, mem/3.8GB). 8 cores entitles ~30GB, so
+            # 24gb is billed by cores and you get all 8. QOS cpu-normal = 1 day max.
             CPUS=8
             MEM="24gb"
             TIME="24:00:00"
@@ -44,6 +46,7 @@ get_cluster_config() {
             PARTITION="positron"
             QOS="positron"
             ACCOUNT="rbi"   # the positron QOS hangs off rbi, not the user's default account
+            QOS_GATED=true
             CPUS=8
             MEM="24G"
             TIME="08:00:00"
@@ -468,8 +471,8 @@ ACCOUNT="${POSITRON_ACCOUNT:-${ACCOUNT}}"
 # Verify the account we will submit under carries the QOS (only for clusters
 # that gate on a dedicated QOS, e.g. bodhi's 'positron'). Checking every
 # association is not enough: sbatch rejects the job if the account it bills
-# lacks the QOS. Alpine's 'amilan' has no special QOS, so nothing to check.
-if [ -n "${QOS}" ]; then
+# lacks the QOS. Alpine's 'cpu-normal' is open to every allocation, so nothing to check.
+if [ "${QOS_GATED}" = true ]; then
     CHECK_ACCOUNT="${ACCOUNT:-$(sacctmgr show user "$USER" format=DefaultAccount -n -p 2>/dev/null | cut -d'|' -f1)}"
     if ! sacctmgr show associations user="$USER" account="${CHECK_ACCOUNT}" format=QOS%80 -n -p 2>/dev/null | tr ',|' '\n' | grep -qx "${QOS}"; then
         echo -e "${YELLOW}Error: account '${CHECK_ACCOUNT}' does not have the '${QOS}' QOS.${NC}"

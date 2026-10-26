@@ -52,8 +52,8 @@ Cluster-specific SLURM settings live in `get_cluster_config()` and are passed vi
 - `--time`: Maximum job duration (24h Alpine, 8h bodhi)
 - `--mem`: Memory allocation (24gb Alpine, 24G bodhi)
 - `--cpus-per-task`: Number of CPU cores (8 on both)
-- `--partition`: Cluster partition (amilan for Alpine, positron for bodhi)
-- `--qos`: Quality of service tier (normal for Alpine, positron for bodhi)
+- `--partition`: Cluster partition (acpu for Alpine, positron for bodhi)
+- `--qos`: Quality of service tier (cpu-normal for Alpine, positron for bodhi)
 
 Optional environment variables (read at submit time):
 
