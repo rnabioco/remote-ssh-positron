@@ -15,6 +15,8 @@
 # SBATCH_ARGS below) so the selected cluster and its resources propagate to the
 # SLURM execution; the directives above are only fallback defaults.
 
+VERSION="0.1.0"
+
 # Colors
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -66,6 +68,8 @@ get_cluster_config() {
 }
 
 print_usage() {
+    echo "positron-remote ${VERSION}"
+    echo ""
     echo "Usage: $0 <command> {alpine|bodhi}"
     echo ""
     echo "Commands:"
@@ -75,6 +79,7 @@ print_usage() {
     echo "  $0 connect {alpine|bodhi}  Reprint connection instructions"
     echo "  $0 stop {alpine|bodhi}     Cancel your Positron job"
     echo "  $0 reset {alpine|bodhi}    Wipe the remote Positron server (fixes version drift)"
+    echo "  $0 --version               Print the script version"
     echo ""
     echo "Environment variables:"
     echo "  POSITRON_ACCOUNT        SLURM account to bill (default: rbi on bodhi, your default on Alpine)"
@@ -447,6 +452,7 @@ case "$1" in
     status)  do_status  "${2:-alpine}"; exit 0 ;;
     stop)    do_stop    "${2:-alpine}"; exit 0 ;;
     connect) do_connect "${2:-alpine}"; exit 0 ;;
+    -V|--version|version) echo "positron-remote ${VERSION}"; exit 0 ;;
     -h|--help|help) print_usage; exit 0 ;;
 esac
 
