@@ -193,7 +193,7 @@ Resources are configured via SLURM directives in `positron-remote.sh`. Default v
 
 Optional environment variables at submit time:
 
-- `POSITRON_ACCOUNT` — SLURM account/allocation to bill (Alpine; defaults to your default allocation)
+- `POSITRON_ACCOUNT` — SLURM account to bill (Bodhi defaults to `rbi`, which carries the `positron` QOS; Alpine defaults to your default allocation)
 - `POSITRON_IDLE_TIMEOUT` — minutes with no SSH session before the job auto-releases (`0` = off)
 
 See [Alpine documentation](https://curc.readthedocs.io/en/latest/compute/alpine.html) for available options.

@@ -57,7 +57,7 @@ Cluster-specific SLURM settings live in `get_cluster_config()` and are passed vi
 
 Optional environment variables (read at submit time):
 
-- `POSITRON_ACCOUNT`: SLURM account/allocation to bill (Alpine); defaults to the user's default allocation
+- `POSITRON_ACCOUNT`: SLURM account to bill; defaults to `rbi` on bodhi (the `positron` QOS is attached to that account) and to the user's default allocation on Alpine
 - `POSITRON_IDLE_TIMEOUT`: minutes with no active SSH session before the job auto-`scancel`s itself (`0` = disabled)
 
 These parameters should be adjusted based on computational requirements. Alpine documentation: https://curc.readthedocs.io/en/latest/compute/alpine.html

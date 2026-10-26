@@ -12,9 +12,17 @@ Resources are configured via SLURM directives in `positron-remote.sh`.
 | `--qos` | `normal` | `positron` |
 | `--cpus-per-task` | 8 | 8 |
 
-## Billing Account (Alpine)
+## Billing Account
 
-Alpine jobs bill against a project allocation. If you belong to more than one, set
+On Bodhi, jobs are submitted under the `rbi` account, because the `positron` QOS is
+attached to that account and not to your other associations. Set `POSITRON_ACCOUNT` to
+override it:
+
+```bash
+POSITRON_ACCOUNT=<account> ./positron-remote.sh bodhi
+```
+
+On Alpine, jobs bill against a project allocation. If you belong to more than one, set
 which account to charge with the `POSITRON_ACCOUNT` environment variable:
 
 ```bash

@@ -43,6 +43,7 @@ get_cluster_config() {
         bodhi)
             PARTITION="positron"
             QOS="positron"
+            ACCOUNT="rbi"   # the positron QOS hangs off rbi, not the user's default account
             CPUS=8
             MEM="24G"
             TIME="08:00:00"
@@ -73,7 +74,7 @@ print_usage() {
     echo "  $0 reset {alpine|bodhi}    Wipe the remote Positron server (fixes version drift)"
     echo ""
     echo "Environment variables:"
-    echo "  POSITRON_ACCOUNT        SLURM account/allocation to bill (Alpine)"
+    echo "  POSITRON_ACCOUNT        SLURM account to bill (default: rbi on bodhi, your default on Alpine)"
     echo "  POSITRON_IDLE_TIMEOUT   Minutes with no SSH session before auto-release (0=off)"
 }
 
@@ -461,15 +462,22 @@ if ! command -v sbatch &>/dev/null; then
     exit 1
 fi
 
-# Verify user has access to the QOS (only for clusters that gate on a
-# dedicated QOS, e.g. bodhi's 'positron'). Alpine's 'amilan' is a general
-# partition with no special QOS, so there's nothing to pre-check there.
+# Resolve the account (env override wins over per-cluster default).
+ACCOUNT="${POSITRON_ACCOUNT:-${ACCOUNT}}"
+
+# Verify the account we will submit under carries the QOS (only for clusters
+# that gate on a dedicated QOS, e.g. bodhi's 'positron'). Checking every
+# association is not enough: sbatch rejects the job if the account it bills
+# lacks the QOS. Alpine's 'amilan' has no special QOS, so nothing to check.
 if [ -n "${QOS}" ]; then
-    if ! sacctmgr show associations user="$USER" format=QOS%80 -n -p 2>/dev/null | tr ',|' '\n' | grep -qx "${QOS}"; then
-        echo -e "${YELLOW}Error: You do not have access to the '${QOS}' QOS.${NC}"
+    CHECK_ACCOUNT="${ACCOUNT:-$(sacctmgr show user "$USER" format=DefaultAccount -n -p 2>/dev/null | cut -d'|' -f1)}"
+    if ! sacctmgr show associations user="$USER" account="${CHECK_ACCOUNT}" format=QOS%80 -n -p 2>/dev/null | tr ',|' '\n' | grep -qx "${QOS}"; then
+        echo -e "${YELLOW}Error: account '${CHECK_ACCOUNT}' does not have the '${QOS}' QOS.${NC}"
         echo ""
-        echo "Your current partition associations:"
+        echo "Your associations:"
         sacctmgr show associations user="$USER" format=Account,Partition,QOS
+        echo ""
+        echo -e "Submit under an account that has it: ${CYAN}POSITRON_ACCOUNT=<account> $0 ${CLUSTER}${NC}"
         exit 1
     fi
 fi
@@ -487,8 +495,6 @@ if [ -n "${EXISTING}" ]; then
     exit 1
 fi
 
-# Resolve optional account (env override wins over per-cluster default).
-ACCOUNT="${POSITRON_ACCOUNT:-${ACCOUNT}}"
 if [ "${CLUSTER}" = "alpine" ] && [ -z "${ACCOUNT}" ]; then
     echo -e "${YELLOW}Note:${NC} no --account set; Alpine will bill your default allocation."
     echo -e "  Choose one with: ${CYAN}POSITRON_ACCOUNT=<alloc> $0 ${CLUSTER}${NC}"
